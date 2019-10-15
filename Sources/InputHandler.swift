@@ -95,7 +95,7 @@ public class InputHandler {
         }
         var dropHeader = false
 
-        if !self.open {
+        if !self.open, records.count > 0 {
             self.open = true
             if self.dialect.header {
                 try self.delegate?.open(header: records.first)
