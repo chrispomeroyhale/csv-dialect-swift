@@ -72,6 +72,7 @@ public class InputHandler {
         Whether any data has been read and the handler is still open. Should not be opened more than once.
     */
     private(set) public var `open` = false
+    private var data = Data()
 
     /**
         Reads and parses a chunk of data from the FileHandle and directs output to its delegate.
@@ -80,14 +81,20 @@ public class InputHandler {
         - Return: Whether data was read. False indicates end of file.
     */
     public func read(length: Int = InputHandler.defaultByteLength) throws -> Bool {
-        let data = self.fileHandle.readData(ofLength: length)
+        data.append(self.fileHandle.readData(ofLength: length))
         guard data.count > 0 else {
             try self.close()
             return false
         }
 
-        let records = try self.parser.import(data: data)
+        var records = Records()
+        do {
+            records = try self.parser.import(data: data)
+        } catch ImportParser.ImportError.badEncoding {
+            return true // We may have broken utf8 in receiving incomplete data
+        }
         var dropHeader = false
+
         if !self.open {
             self.open = true
             if self.dialect.header {
@@ -99,6 +106,8 @@ public class InputHandler {
         }
 
         try self.delegate?.append(records: dropHeader ? Array(records.dropFirst()) : records)
+
+        self.data = Data()
 
         return true
     }
