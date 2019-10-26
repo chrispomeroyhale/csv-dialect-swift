@@ -97,22 +97,18 @@ public class ImportParser {
                     if !(dialect.skipInitialSpace && !quoted && field.isEmpty) {
                         field += String(character)
                     }
-                case Character("\r\n"): // CRLF
-                    fallthrough
-                case Character("\n"): // LF
-                    fallthrough
                 case Character(dialect.lineTerminator):
                     if !quoted {
                         records.append(try self.terminateRow())
                     } else {
-                        field += dialect.lineTerminator
+                        field += String(character)
                     }
                 default:
                     if let escapeCharacter = dialect.escapeCharacter {
                         if lastSpecialCharacter == escapeCharacter {
                             field += String(escapeCharacter)
                         }
-                    } else if let quoteCharacter = dialect.quoteCharacter {
+                    } else if let quoteCharacter = dialect.quoteCharacter, character == quoteCharacter {
                         if !quoted {
                             quoted = true
                             if dialect.doubleQuote, lastSpecialCharacter == dialect.quoteCharacter {
@@ -123,12 +119,21 @@ public class ImportParser {
                             if escapedQuote {
                                 field += String(quoteCharacter)
                             } else {
-                                // In doubleQuote mode, quoted will turn off and on again
+                                // Note: In doubleQuote mode, quoted will turn off and on again
                                 quoted = false
                             }
                         }
+                    } else if character == Character("\r"), dialect.lineTerminator == "\r\n" {
+                        // Assumes \r is followed by \r\n to handle a special case
+                    } else if character == Character("\n"), dialect.lineTerminator == "\r\n" {
+                        // Special case for \r\n (CRLF) which we need to handle in the event the string gets split between characters
+                        if lastSpecialCharacter == Character("\r"), !quoted {
+                            records.append(try self.terminateRow())
+                        } else {
+                            field += String(character)
+                        }
                     } else {
-                        throw ImportError.uncaughtCharacter(UInt(row.count) + 1, character)
+                        throw ImportError.uncaughtCharacter(recordNumber + 1, character)
                     }
                 }
                 lastSpecialCharacter = character
@@ -146,7 +151,6 @@ public class ImportParser {
             return nil
         }
         let record = try self.terminateRow()
-        self.recordNumber += 1
         return record
     }
 

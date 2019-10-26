@@ -9,6 +9,7 @@ class ImportTests: XCTestCase {
         ("testHeadersOnly", testHeadersOnly),
         ("testLeadingWhitespace", testLeadingWhitespace),
         ("testLineFeedOnly", testLineFeedOnly),
+        ("testLineTerminatorStreamSplit", testLineTerminatorStreamSplit),
         ("testMissingEndOfLine", testMissingEndOfLine),
         ("testMissingHeaders", testMissingHeaders),
         ("testMixedLineTerminator", testMixedLineTerminator),
@@ -101,6 +102,42 @@ class ImportTests: XCTestCase {
         XCTAssertEqual(document.records.count, 1)
     }
 
+    func testLineTerminatorStreamSplit() {
+        let inputURL = Utility.fixtureURL(named: "lineTerminatorStreamSplit.csv")
+        var dialect = Dialect()
+        dialect.header = false
+        let inputFileHandle = try! FileHandle(forReadingFrom: inputURL)
+        let inputHandler = InputHandler(fileHandle: inputFileHandle, dialect: dialect)
+
+        class Handler: InputHandlerDelegate {
+            var records = Records()
+
+            public func open(header: Header? = nil) throws {}
+
+            public func append(records: Records) throws {
+                self.records.append(contentsOf: records)
+            }
+
+            public func close() throws {}
+        }
+        let handler = Handler()
+        inputHandler.delegate = handler
+
+        do {
+            try inputHandler.readToEndOfFile(length: 8)
+        } catch {
+            XCTFail()
+        }
+
+        XCTAssertEqual(handler.records.count, 2)
+
+        XCTAssertEqual(handler.records[0][0], "abc")
+        XCTAssertEqual(handler.records[0][1], "xyz")
+
+        XCTAssertEqual(handler.records[1][0], "123")
+        XCTAssertEqual(handler.records[1][1], "456")
+    }
+
     func testMissingEndOfLine() {
         let data = Utility.fixture(named: "missingEndOfLine.csv")
         let document = try! Document(data: data)
@@ -134,7 +171,7 @@ class ImportTests: XCTestCase {
         XCTAssertEqual(document.header!.count, 2)
         XCTAssertEqual(document.records.count, 2)
 
-        XCTAssertEqual(document.records[0][0], "Always bear in mind that your own resolution to succeed\r\nis more important than any other.") // Note: Converts to dialect's lineTerminator
+        XCTAssertEqual(document.records[0][0], "Always bear in mind that your own resolution to succeed\nis more important than any other.")
         XCTAssertEqual(document.records[0][1], Authors.abrahamLincoln.rawValue)
 
         XCTAssertEqual(document.records[1][0], Quotes.mahatmaGandhi.rawValue)
