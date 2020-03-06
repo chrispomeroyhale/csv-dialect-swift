@@ -17,7 +17,7 @@ public class InputIterator: IteratorProtocol {
 
     private(set) public var invalidated = false
     private(set) public var header: Header?
-    private(set) public var recordBuffer = ArraySlice<Row>()
+    private(set) public var recordBuffer = ArraySlice<Record>()
     private let handler: InputHandler
 
     /**
@@ -42,7 +42,7 @@ public class InputIterator: IteratorProtocol {
 
     // MARK: - IteratorProtocol
 
-    public func next() -> Row? {
+    public func next() -> Record? {
         do {
             while self.recordBuffer.isEmpty, try self.handler.read() {}
             return self.recordBuffer.popFirst()
@@ -59,7 +59,7 @@ extension InputIterator: InputHandlerDelegate {
         self.header = header
     }
 
-    public func append(records: Records) throws {
+    public func append(records: [Record]) throws {
         self.recordBuffer.append(contentsOf: records)
     }
 

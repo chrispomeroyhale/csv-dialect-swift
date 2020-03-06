@@ -39,18 +39,18 @@ public class ImportParser {
     private var field: Field = ""
     private var quoted: Bool = false
     private var lastSpecialCharacter: Character?
-    private var recordNumber: UInt = 0
+    private var rowNumber: UInt = 0
     private var fieldsCount: UInt?
 
     /**
-        Transform a chunk of data CSV into in-memory records.
+        Transform a chunk of data CSV into in-memory rows.
 
         - Parameter data: A chunk of UTF-8 encoded CSV data. Transformation relies on the accuracy of its dialect. Data is expected to be inputted in order lest the parser state may become invalid.
         - Throws: ImportError
         - Returns: Parsed rows. An incomplete row is not returned prematurely until the data is provided or a flush command is issued.
         - Note: It is best practice to call the flush method after having parsed the last of the input data.
     */
-    public func `import`(data: Data) throws -> Records {
+    public func `import`(data: Data) throws -> [Row] {
         guard let string = String(data: data, encoding: String.Encoding.utf8) else {
             throw ImportError.badEncoding
         }
@@ -59,7 +59,7 @@ public class ImportParser {
         scanner.scanLocation = 0
         scanner.charactersToBeSkipped = nil
 
-        var records = Records()
+        var rows = [Row]()
 
         while true {
             var fieldPartition: NSString?
@@ -99,7 +99,7 @@ public class ImportParser {
                     }
                 case Character(dialect.lineTerminator):
                     if !quoted {
-                        records.append(try self.terminateRow())
+                        rows.append(try self.terminateRow())
                     } else {
                         field += String(character)
                     }
@@ -128,19 +128,19 @@ public class ImportParser {
                     } else if character == Character("\n"), dialect.lineTerminator == "\r\n" {
                         // Special case for \r\n (CRLF) which we need to handle in the event the string gets split between characters
                         if lastSpecialCharacter == Character("\r"), !quoted {
-                            records.append(try self.terminateRow())
+                            rows.append(try self.terminateRow())
                         } else {
                             field += String(character)
                         }
                     } else {
-                        throw ImportError.uncaughtCharacter(recordNumber + 1, character)
+                        throw ImportError.uncaughtCharacter(rowNumber + 1, character)
                     }
                 }
                 lastSpecialCharacter = character
             }
         }
 
-        return records
+        return rows
     }
 
     /**
@@ -150,8 +150,8 @@ public class ImportParser {
         guard !field.isEmpty else {
             return nil
         }
-        let record = try self.terminateRow()
-        return record
+        let terminatingRow = try self.terminateRow()
+        return terminatingRow
     }
 
     private func terminateField() {
@@ -166,20 +166,20 @@ public class ImportParser {
     }
 
     private func terminateRow() throws -> Row {
-        var record: Row
+        var terminatingRow: Row
 
         self.terminateField()
         // Terminate row
         if let lastCount = fieldsCount, lastCount != row.count {
-            throw ImportError.uneven(recordNumber + 1)
+            throw ImportError.uneven(rowNumber + 1)
         }
-        recordNumber += 1
+        rowNumber += 1
         fieldsCount = UInt(row.count)
-        record = row
-        row = []
+        terminatingRow = row
+        row = Row()
         lastSpecialCharacter = nil
 
-        return record
+        return terminatingRow
     }
 
 }

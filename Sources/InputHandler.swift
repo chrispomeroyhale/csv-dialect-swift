@@ -17,7 +17,7 @@ public protocol InputHandlerDelegate: class {
 
         - Throws: When the state is invalid.
     */
-    func append(records: Records) throws
+    func append(records: [Record]) throws
 
     /**
         Stream has ended reading. Once closed no more data is expected and the receiver should not be reopened without an explicit reset.
@@ -96,25 +96,25 @@ public class InputHandler {
             return false
         }
 
-        var records = Records()
+        var rows = [Row]()
         do {
-            records = try self.parser.import(data: data)
+            rows = try self.parser.import(data: data)
         } catch ImportParser.ImportError.badEncoding {
             return true // We may have broken utf8 in receiving incomplete data
         }
         var dropHeader = false
 
-        if !self.isOpen, records.count > 0 {
+        if !self.isOpen, rows.count > 0 {
             self.isOpen = true
             if self.dialect.header {
-                try self.delegate?.open(header: records.first)
+                try self.delegate?.open(header: rows.first)
                 dropHeader = true
             } else {
                 try self.delegate?.open(header: nil)
             }
         }
 
-        try self.delegate?.append(records: dropHeader ? Array(records.dropFirst()) : records)
+        try self.delegate?.append(records: dropHeader ? Array(rows.dropFirst()) : rows)
 
         self.data = Data()
 

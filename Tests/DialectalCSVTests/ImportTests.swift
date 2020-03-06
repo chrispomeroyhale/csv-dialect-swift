@@ -110,11 +110,11 @@ class ImportTests: XCTestCase {
         let inputHandler = InputHandler(fileHandle: inputFileHandle, dialect: dialect)
 
         class Handler: InputHandlerDelegate {
-            var records = Records()
+            var records = [Record]()
 
             public func open(header: Header? = nil) throws {}
 
-            public func append(records: Records) throws {
+            public func append(records: [Record]) throws {
                 self.records.append(contentsOf: records)
             }
 

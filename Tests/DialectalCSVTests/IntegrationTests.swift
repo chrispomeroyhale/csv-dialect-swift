@@ -14,7 +14,7 @@ class IntegrationTests : XCTestCase {
     let header = [HeaderFields.quote.rawValue, HeaderFields.author.rawValue]
     let authors = [Authors.mahatmaGandhi.rawValue, Authors.abrahamLincoln.rawValue, Authors.theodoreRoosevelt.rawValue]
     let quotes = [Quotes.mahatmaGandhi.rawValue, Quotes.abrahamLincoln.rawValue, Quotes.theodoreRoosevelt.rawValue]
-    var records = Records()
+    var records = [Record]()
 
     override func setUp() {
         self.records = [

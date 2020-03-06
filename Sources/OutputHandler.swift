@@ -35,12 +35,12 @@ public class OutputHandler: InputHandlerDelegate {
 
     public func open(header: Header? = nil) throws {
         if let headerFields = header {
-            self.fileHandle.write(try self.parser.export(records: [headerFields]))
+            self.fileHandle.write(try self.parser.export(rows: [headerFields]))
         }
     }
 
-    public func append(records: Records) throws {
-        self.fileHandle.write(try self.parser.export(records: records))
+    public func append(records: [Record]) throws {
+        self.fileHandle.write(try self.parser.export(rows: records))
     }
 
     public func close() throws {

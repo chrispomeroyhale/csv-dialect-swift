@@ -12,27 +12,27 @@ public class ExportParser {
     }
 
     /**
-        - badEncoding: Unable to convert records into UTF-8 encoded data.
+        - badEncoding: Unable to convert rows into UTF-8 encoded data.
     */
     public enum ExportError: Error {
     case badEncoding
     }
 
     /**
-        Export piecemeal records to a UTF-8 encoded data representation. Each row ought to have the same number of values.
+        Export piecemeal rows to a UTF-8 encoded data representation. Each row ought to have the same number of values.
     */
-    public func export(records: Records) throws -> Data {
-        guard records.count > 0 else {
+    public func export(rows: [Row]) throws -> Data {
+        guard rows.count > 0 else {
             return Data()
         }
 
-        let records = records.map { (row: Row) -> String in
+        let rows = rows.map { (row: Row) -> String in
             let transformedLines = row.map { self.escaped(field: $0) }
             return transformedLines.joined(separator: self.dialect.delimiter)
         }
 
         let lineTerminator = String(self.dialect.lineTerminator)
-        let string = records.joined(separator: lineTerminator).appending(lineTerminator)
+        let string = rows.joined(separator: lineTerminator).appending(lineTerminator)
 
         guard let data = string.data(using: String.Encoding.utf8) else {
             throw ExportError.badEncoding

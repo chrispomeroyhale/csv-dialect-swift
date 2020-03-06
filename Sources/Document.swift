@@ -1,10 +1,5 @@
 import Foundation
 
-public typealias Field = String
-public typealias Row = [Field]
-public typealias Header = Row
-public typealias Records = [Row]
-
 /**
     Convenience model for working with CSV in-memory.
 
@@ -15,7 +10,7 @@ public class Document: InputHandlerDelegate {
     public let dialect: Dialect?
 
     public var header: Header?
-    public var records = Records()
+    public var records = [Record]()
 
     /**
         Initialize an empty document.
@@ -27,16 +22,16 @@ public class Document: InputHandlerDelegate {
     /**
         Initialize a document populated with records and an optional header.
     */
-    public convenience init(header: Header?, records: Records, dialect: Dialect? = nil) {
+    public convenience init(header: Header?, records: [Record], dialect: Dialect? = nil) {
         self.init(dialect: dialect)
         self.header = header
         self.records = records
     }
 
     /**
-        Initialize a document populated with records. Extract and set the header if denoted by the dialect.
+        Initialize a document populated with rows. Extract and set the header if denoted by the dialect.
     */
-    public convenience init(allRows: Records, dialect: Dialect? = nil) {
+    public convenience init(allRows: [Row], dialect: Dialect? = nil) {
         self.init(dialect: dialect)
         if let dialect = dialect, dialect.header {
             self.header = allRows.first ?? []
@@ -80,9 +75,9 @@ public class Document: InputHandlerDelegate {
         let parser = ExportParser(dialect: dialect)
         var data = Data()
         if let headerFields = self.header {
-            data.append(try parser.export(records: [headerFields]))
+            data.append(try parser.export(rows: [headerFields]))
         }
-        data.append(try parser.export(records: self.records))
+        data.append(try parser.export(rows: self.records))
         return data
     }
 
@@ -119,7 +114,7 @@ public class Document: InputHandlerDelegate {
         self.header = header
     }
 
-    public func append(records: Records) throws {
+    public func append(records: [Record]) throws {
         self.records.append(contentsOf: records)
     }
 
