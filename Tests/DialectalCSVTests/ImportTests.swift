@@ -119,6 +119,8 @@ class ImportTests: XCTestCase {
             }
 
             public func close() throws {}
+
+            public func reset() {}
         }
         let handler = Handler()
         inputHandler.delegate = handler

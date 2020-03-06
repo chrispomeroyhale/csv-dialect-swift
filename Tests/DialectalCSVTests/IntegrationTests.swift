@@ -5,6 +5,7 @@ class IntegrationTests : XCTestCase {
 
     static var allTests = [
         ("testDocumentExportAgainstDocumentImport", testDocumentExportAgainstDocumentImport),
+        ("testIterationStreamInput", testIterationStreamInput),
         ("testStreamInput", testStreamInput),
         ("testStreamOutput", testStreamOutput),
         ("testStreamInputToOutput", testStreamInputToOutput),
@@ -41,6 +42,59 @@ class IntegrationTests : XCTestCase {
 
         XCTAssertEqual(documentImport.records[2][0], quotes[2])
         XCTAssertEqual(documentImport.records[2][1], authors[2])
+    }
+
+    // Tests iteration exposed by `InputBuffer`
+    func testIterationStreamInput() {
+        let inputURL = Utility.fixtureURL(named: "multipleRecords.csv")
+        let inputHandler = try! InputHandler(from: inputURL)
+        XCTAssertNotNil(try? inputHandler.readToEndOfFile())
+
+        let iteratorA = inputHandler.makeIterator()
+
+        // Iterator should be starting to read before any next() calls
+        XCTAssertNotNil(iteratorA.header)
+        XCTAssertEqual(iteratorA.header!.count, 2)
+
+        // Pull first record with iterator A
+        let record1 = iteratorA.next()
+        XCTAssertNotNil(record1)
+        XCTAssertEqual(record1!.count, 2)
+        XCTAssertEqual(record1![0], Quotes.mahatmaGandhi.rawValue)
+        XCTAssertEqual(record1![1], Authors.mahatmaGandhi.rawValue)
+
+        // Start a new iterator B which should invalidate iterator A
+        let iteratorB = inputHandler.makeIterator()
+        XCTAssertTrue(iteratorA.invalidated)
+        XCTAssertFalse(iteratorB.invalidated)
+        XCTAssertNil(iteratorA.next())
+        XCTAssertNotNil(iteratorB.next())
+
+        // Switch to iterator B but leaving where iterator A left off
+        let record2 = iteratorB.next()
+        XCTAssertNotNil(record2)
+        XCTAssertEqual(record2!.count, 2)
+        XCTAssertEqual(record2![0], Quotes.abrahamLincoln.rawValue)
+        XCTAssertEqual(record2![1], Authors.abrahamLincoln.rawValue)
+
+        // Pull final record
+        let record3 = iteratorB.next()
+        XCTAssertNotNil(record3)
+        XCTAssertEqual(record3!.count, 2)
+        XCTAssertEqual(record3![0], Quotes.theodoreRoosevelt.rawValue)
+        XCTAssertEqual(record3![1], Authors.theodoreRoosevelt.rawValue)
+
+        // Ensure subsequent pulls ends the iteration
+        let record4 = iteratorB.next()
+        XCTAssertNil(record4)
+
+        // Header information should be kept even after iteration ends
+        XCTAssertNotNil(iteratorB.header)
+        XCTAssertEqual(iteratorB.header!.count, 2)
+
+        // Test a potential regression where the iterator might reset the stream after being nil once
+        let record1_1 = iteratorB.next()
+        XCTAssertNil(record1_1)
     }
 
     func testStreamInput() {

@@ -69,7 +69,6 @@ public class Document: InputHandlerDelegate {
         let inputHandler = InputHandler(fileHandle: fileHandle, dialect: dialect)
         inputHandler.delegate = self
         try inputHandler.readToEndOfFile()
-        try inputHandler.close()
     }
 
     /**
@@ -125,5 +124,7 @@ public class Document: InputHandlerDelegate {
     }
 
     public func close() throws {}
+
+    public func reset() {}
 
 }

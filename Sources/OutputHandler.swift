@@ -47,4 +47,6 @@ public class OutputHandler: InputHandlerDelegate {
         self.fileHandle.closeFile()
     }
 
+    public func reset() {}
+
 }
