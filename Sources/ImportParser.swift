@@ -36,7 +36,7 @@ public class ImportParser {
     }
 
     private var row = Row()
-    private var field: Field = ""
+    private var field: String = ""
     private var quoted: Bool = false
     private var lastSpecialCharacter: Character?
     private var rowNumber: UInt = 0
@@ -157,11 +157,9 @@ public class ImportParser {
     private func terminateField() {
         // Differentiate null sequence
         let wasQuoted = (dialect.quoteCharacter != nil && lastSpecialCharacter == dialect.quoteCharacter!)
-        if field == dialect.nullSequence, !wasQuoted {
-            field = ""
-        }
+        let wrappedField: Field = (field == dialect.nullSequence && !wasQuoted) ? nil : field
         // Terminate field
-        row.append(field)
+        row.append(wrappedField)
         field = ""
     }
 

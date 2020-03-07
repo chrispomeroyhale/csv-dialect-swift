@@ -16,6 +16,7 @@ public class ExportParser {
     */
     public enum ExportError: Error {
     case badEncoding
+    case conflictingInput
     }
 
     /**
@@ -26,8 +27,8 @@ public class ExportParser {
             return Data()
         }
 
-        let rows = rows.map { (row: Row) -> String in
-            let transformedLines = row.map { self.escaped(field: $0) }
+        let rows = try rows.map { (row: Row) -> String in
+            let transformedLines = try row.map { try self.escaped(field: $0) }
             return transformedLines.joined(separator: self.dialect.delimiter)
         }
 
@@ -40,24 +41,28 @@ public class ExportParser {
         return data
     }
 
-    private func escaped(field: String) -> String {
+    private func escaped(field: Field) throws -> String {
+        guard let unwrappedField = field else {
+            guard let nullSequence = dialect.nullSequence else {
+                throw ExportError.conflictingInput
+            }
+            return nullSequence
+        }
         let dialect = self.dialect
-        if field == "" {
-            return dialect.nullSequence ?? ""
-        } else if let quote = dialect.quoteCharacter {
+        if let quote = dialect.quoteCharacter {
             let quoteString = String(quote)
-            var escapedField = field
+            var escapedField = unwrappedField
             if dialect.doubleQuote {
-                escapedField = field.replacingOccurrences(of: quoteString, with: quoteString + quoteString)
+                escapedField = unwrappedField.replacingOccurrences(of: quoteString, with: quoteString + quoteString)
             }
             return quoteString + escapedField + quoteString
         } else if let escape = dialect.escapeCharacter {
             let escapeString = String(escape)
-            let escapedField = field.replacingOccurrences(of: escapeString, with: escapeString + escapeString)
+            let escapedField = unwrappedField.replacingOccurrences(of: escapeString, with: escapeString + escapeString)
             return escapedField.replacingOccurrences(of: dialect.delimiter, with: escapeString + dialect.delimiter)
         }
 
-        return field
+        return unwrappedField
     }
 
 }

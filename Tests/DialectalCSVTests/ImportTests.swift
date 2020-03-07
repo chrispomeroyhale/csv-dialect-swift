@@ -234,7 +234,7 @@ class ImportTests: XCTestCase {
         XCTAssertEqual(document.header!.count, 2)
         XCTAssertEqual(document.records.count, 2)
 
-        XCTAssertEqual(document.records[0][0], "")
+        XCTAssertEqual(document.records[0][0], nil)
         XCTAssertEqual(document.records[0][1], "null")
 
         XCTAssertEqual(document.records[1][0], Quotes.abrahamLincoln.rawValue)

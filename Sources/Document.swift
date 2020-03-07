@@ -34,7 +34,7 @@ public class Document: InputHandlerDelegate {
     public convenience init(allRows: [Row], dialect: Dialect? = nil) {
         self.init(dialect: dialect)
         if let dialect = dialect, dialect.header {
-            self.header = allRows.first ?? []
+            self.header = (allRows.first ?? []).compactMap { $0 }
             self.records = Array(allRows.dropFirst(1))
         } else {
             self.records = allRows

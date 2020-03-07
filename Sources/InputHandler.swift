@@ -107,7 +107,8 @@ public class InputHandler {
         if !self.isOpen, rows.count > 0 {
             self.isOpen = true
             if self.dialect.header {
-                try self.delegate?.open(header: rows.first)
+                let header = rows.first?.compactMap { $0 }
+                try self.delegate?.open(header: header)
                 dropHeader = true
             } else {
                 try self.delegate?.open(header: nil)

@@ -10,7 +10,7 @@ class ExportTests : XCTestCase {
     func testNullSequenceValues() {
         let records = [
             ["quote", "author"],
-            ["", "null"],
+            [nil, "null"],
             [Quotes.abrahamLincoln.rawValue, "   null"],
         ]
         var dialect = Dialect()
