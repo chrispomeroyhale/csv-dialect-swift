@@ -1,0 +1,10 @@
+os: osx
+language: swift
+osx_image: xcode11.3
+env:
+  - PACKAGE_NAME=csv-dialect-swift
+script:
+  - swift test --enable-code-coverage
+  - xcrun llvm-cov show .build/x86_64-apple-macosx/debug/${PACKAGE_NAME}PackageTests.xctest/Contents/MacOS/csv-dialect-swiftPackageTests -instr-profile .build/x86_64-apple-macosx/debug/codecov/default.profdata > ${PACKAGE_NAME}PackageTests.xctest.coverage.txt
+after_success:
+  - bash <(curl -s https://codecov.io/bash) -J ${PACKAGE_NAME} -D ".build/x86_64-apple-macosx/debug/" -X gcov

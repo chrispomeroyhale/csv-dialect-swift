@@ -1,4 +1,6 @@
 # DialectalCSV (`csv-dialect-swift`)
+[![TravisCI Build Status](https://travis-ci.org/chrispomeroyhale/csv-dialect-swift.svg?branch=master)](https://travis-ci.org/chrispomeroyhale/csv-dialect-swift)
+[![Codecov](https://codecov.io/gh/chrispomeroyhale/csv-dialect-swift/branch/master/graph/badge.svg)](https://codecov.io/gh/chrispomeroyhale/csv-dialect-swift)
 
 A multi-[dialect](https://frictionlessdata.io/specs/csv-dialect/) CSV parser written in Swift for importing and exporting the delectable flavors of comma separated values documents.
 
