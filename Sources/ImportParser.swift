@@ -71,12 +71,12 @@ public class ImportParser {
                 field += partition
             }
 
-            var characters: NSString?
-            if !scanner.scanCharacters(from: characterSet, into: &characters) {
-                break
+            if fieldPartition?.length ?? 0 > 0 {
+                lastSpecialCharacter = nil
             }
 
-            guard let specials = characters as String? else {
+            var characters: NSString?
+            guard scanner.scanCharacters(from: characterSet, into: &characters), let specials = characters as String? else {
                 break
             }
 
@@ -115,13 +115,8 @@ public class ImportParser {
                                 field += String(quoteCharacter)
                             }
                         } else {
-                            let escapedQuote = !dialect.doubleQuote && dialect.escapeCharacter == lastSpecialCharacter
-                            if escapedQuote {
-                                field += String(quoteCharacter)
-                            } else {
-                                // Note: In doubleQuote mode, quoted will turn off and on again
-                                quoted = false
-                            }
+                            // Note: In doubleQuote mode, quoted will turn off and on again
+                            quoted = false
                         }
                     } else if character == Character("\r"), dialect.lineTerminator == "\r\n" {
                         // Assumes \r is followed by \r\n to handle a special case
