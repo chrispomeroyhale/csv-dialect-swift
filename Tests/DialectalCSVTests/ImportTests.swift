@@ -27,7 +27,6 @@ class ImportTests: XCTestCase {
         let data = Utility.fixture(named: "escapeCharacter.csv")
         var dialect = Dialect()
         dialect.escapeCharacter = "'"
-        dialect.doubleQuote = false
         let document = try! Document(data: data, dialect: dialect)
 
         XCTAssertEqual(document.header!.count, 2)
@@ -36,7 +35,7 @@ class ImportTests: XCTestCase {
         XCTAssertEqual(document.records[0][0], "The best way to find yourself is to lose yourself in the ,service, of others.")
         XCTAssertEqual(document.records[0][1], "'" + Authors.mahatmaGandhi.rawValue)
 
-        // Regression: Ensure that escape status 
+        // Regression: Ensure that escape status
         XCTAssertEqual(document.records[1][0], "Always bear in mind that your own resolution to succeed is more important than any 'other.")
         XCTAssertEqual(document.records[1][1], Authors.abrahamLincoln.rawValue)
     }
