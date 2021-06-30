@@ -7,6 +7,9 @@ import Foundation
 */
 public class Document: InputHandlerDelegate {
 
+    /**
+        Dialect that represents the initialized document records. Note that exporting does not use this dialect.
+    */
     public let dialect: Dialect?
 
     public var header: Header?

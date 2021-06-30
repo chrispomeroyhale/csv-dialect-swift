@@ -1,6 +1,6 @@
 # DialectalCSV (`csv-dialect-swift`)
-[![TravisCI Build Status](https://travis-ci.org/chrispomeroyhale/csv-dialect-swift.svg?branch=master)](https://travis-ci.org/chrispomeroyhale/csv-dialect-swift)
-[![Coverage Status](https://coveralls.io/repos/github/chrispomeroyhale/csv-dialect-swift/badge.svg?branch=master)](https://coveralls.io/github/chrispomeroyhale/csv-dialect-swift?branch=master)
+[![TravisCI Build Status](https://travis-ci.org/chrispomeroyhale/csv-dialect-swift.svg?branch=main)](https://travis-ci.org/chrispomeroyhale/csv-dialect-swift)
+[![Coverage Status](https://coveralls.io/repos/github/chrispomeroyhale/csv-dialect-swift/badge.svg?branch=main)](https://coveralls.io/github/chrispomeroyhale/csv-dialect-swift?branch=main)
 
 A multi-[dialect](https://frictionlessdata.io/specs/csv-dialect/) CSV parser written in Swift for importing and exporting the delectable flavors of comma separated values documents.
 
@@ -9,8 +9,12 @@ This library provides a tiered interface for working with CSV. At its core is a 
 The library is backed by a small set of unit tests which provides a basis for regression testing.
 
 ## Requirements
- * Source compatibility with Swift 4.2
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fchrispomeroyhale%2Fcsv-dialect-swift%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/chrispomeroyhale/csv-dialect-swift)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fchrispomeroyhale%2Fcsv-dialect-swift%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/chrispomeroyhale/csv-dialect-swift)
+
+ * Source compatible with Swift 4.2 and up
  * Targets Apple platforms, namely macOS and iOS
+ * Relies upon `Foundation` and Swift standard library APIs only
     * Linux support unavailable due to an incomplete `Scanner` implementation in `swift-corelibs-foundation`
 
 ## Feature Status
@@ -29,16 +33,62 @@ The library is backed by a small set of unit tests which provides a basis for re
 
 This implementation is compatible with `csvddfVersion` 1.2.
 
-## Integrating into Your Project
-This project is set up using Swift Package Manager. Alternative methods are possible if SPM is not an option.
+## Usage
+For additional examples take a look at the test cases and consult the interface documentation including the possible error cases that can be thrown.
 
-### Manual Swift Package Manager
+### Opening a CSV Document in Memory
+Open a tab separated value (TSV) file from in-memory data:
+
+    import DialectalCSV
+
+    var dialect = Dialect()
+    dialect.delimiter = "\t"
+    dialect.header = false
+    let document = try Document(data: data, dialect: dialect)
+
+### Creating a CSV Document
+Create a CSV document from Foundation objects and set a custom null sequence pattern for nil values.
+
+    import DialectalCSV
+
+    let headerAndRows = [ ["name", "nickname"], ["Nelson Mandela", "Madiba"] ]
+    let document = Document(allRows: headerAndRows)
+    document.records.append(["Mahatma Gandhi", nil])
+
+    let outputFileHandle = try FileHandle(forWritingTo: outputURL)
+    var dialect = Dialect()
+    dialect.nullSequence = "n/a"
+    try document.export(fileHandle: outputFileHandle, dialect: dialect)
+
+### Converting a CSV Document via Data Streaming
+Convert a CSV document to a tab separated value (TSV). Stream it into a buffer of the default byte length instead of loading it all into memory at once.
+
+    import DialectalCSV
+
+    FileManager.default.createFile(atPath: outputURL.path, contents: nil)
+    let outputFileHandle = try FileHandle(forWritingTo: outputURL)
+    var outputDialect = Dialect()
+    outputDialect.delimiter = "\t"
+    let outputHandler = OutputHandler(fileHandle: outputFileHandle, dialect: outputDialect)
+
+    let inputFileHandle = try FileHandle(forReadingFrom: inputURL)
+    let inputHandler = InputHandler(fileHandle: inputFileHandle, dialect: inputDialect)
+    inputHandler.delegate = outputHandler
+
+    try inputHandler.readToEndOfFile()
+
+## Integrating into Your Project
+This project is intended to be distributed via Swift Package Manager. Alternative methods are possible if SPM is not an option.
+
+### Xcode via Swift Package Manager (Recommended)
+In Xcode 11 Swift Package Manager is now integrated into Xcode. Add this package as you would any other Swift package.
+
+This method was not reliable until about Xcode 11.2. There is no xcodeproj for older versions of Xcode although one can be generated. See the Xcode Subproject option.
+
+### Manual Swift Package Manager (Recommended)
 Add the following dependency to your `Package.swift`'s `dependencies` and use `DialectalCSV` as the name of the dependency. You may wish to change the branch or use a particular revision.
 
-	.package(url: "git@github.com:slythfox/csv-dialect-swift.git", .branch("master"))
-
-### Xcode Swift Package Manager
-Instead of providing an Xcode project this project uses Swift Package Manager (SPM) which relies on dependents to generate their own Xcode project to build the library. Presently Xcode has no knowledge of Swift Package Manager and requires manual configuration using SPM tool for generating Xcode projects.
+	.package(url: "git@github.com:chrispomeroyhale/csv-dialect-swift.git", .branch("main"))
 
 ### Carthage (Not Recommended)
 While Carthage does not officially support Swift Package Manager it is possible to integrate it manually. Create a "Run Script" phase and position it to appear before the "Compile Sources" phase to automate updating, generating the Xcode project, and building of dependencies. After running the script follow Carthage's documentation for integrating the dependency into your project.
