@@ -1,0 +1,26 @@
+name: Swift
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
+  PACKAGE_NAME: csv-dialect-swift
+
+jobs:
+  build:
+    runs-on: macos-latest
+    environment: main
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install deps
+      run: sudo gem install coveralls-lcov
+    - name: Run tests
+      run: |
+        swift test --enable-code-coverage
+        xcrun llvm-cov export -format=lcov -ignore-filename-regex="Tests" -instr-profile .build/debug/codecov/default.profdata .build/debug/${PACKAGE_NAME}PackageTests.xctest/Contents/MacOS/${PACKAGE_NAME}PackageTests > coverage.info
+    - name: Upload codecov 
+      run: coveralls-lcov --repo-token $COVERALLS_TOKEN coverage.info
