@@ -64,7 +64,9 @@ class ImportTests: XCTestCase {
 
     func testLeadingWhitespace() {
         let data = Utility.fixture(named: "leadingWhitespace.csv")
-        let excludeLeadingSpace = try! Document(data: data)
+        var dialect = Dialect()
+        dialect.skipInitialSpace = true 
+        let excludeLeadingSpace = try! Document(data: data, dialect: dialect)
 
         XCTAssertEqual(excludeLeadingSpace.header!.count, 2)
         XCTAssertEqual(excludeLeadingSpace.records.count, 3)
@@ -78,9 +80,7 @@ class ImportTests: XCTestCase {
         XCTAssertEqual(excludeLeadingSpace.records[2][0], Quotes.theodoreRoosevelt.rawValue)
         XCTAssertEqual(excludeLeadingSpace.records[2][1], Authors.theodoreRoosevelt.rawValue)
 
-        var dialect = Dialect()
-        dialect.skipInitialSpace = false
-        let includeLeadingSpace = try! Document(data: data, dialect: dialect)
+        let includeLeadingSpace = try! Document(data: data)
 
         XCTAssertEqual(includeLeadingSpace.header!.count, 2)
         XCTAssertEqual(includeLeadingSpace.records.count, 3)
@@ -246,9 +246,7 @@ class ImportTests: XCTestCase {
 
     func testNullValues() {
         let data = Utility.fixture(named: "nullValues.csv")
-        var dialect = Dialect()
-        dialect.skipInitialSpace = false
-        let document = try! Document(data: data, dialect: dialect)
+        let document = try! Document(data: data)
 
         XCTAssertEqual(document.header!.count, 2)
         XCTAssertEqual(document.records.count, 2)

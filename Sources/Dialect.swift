@@ -21,7 +21,7 @@ public struct Dialect: Equatable {
         }
     }
     public var nullSequence: String?
-    public var skipInitialSpace: Bool = true
+    public var skipInitialSpace: Bool = false 
     public var header: Bool = true
 
     public init() {}
