@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "csv-dialect-swift",
     products: [
-        .library(name: "DialectalCSV", type: .static, targets: ["DialectalCSV"])
+        .library(name: "DialectalCSV", targets: ["DialectalCSV"])
     ],
     dependencies: [],
     targets: [
