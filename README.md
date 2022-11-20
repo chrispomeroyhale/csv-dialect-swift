@@ -1,5 +1,5 @@
 # DialectalCSV (`csv-dialect-swift`)
-[![TravisCI Build Status](https://travis-ci.org/chrispomeroyhale/csv-dialect-swift.svg?branch=main)](https://travis-ci.org/chrispomeroyhale/csv-dialect-swift)
+![Build Status](https://github.com/chrispomeroyhale/csv-dialect-swift/actions/workflows/tests.yml/badge.svg?branch=main)
 [![Coverage Status](https://coveralls.io/repos/github/chrispomeroyhale/csv-dialect-swift/badge.svg?branch=main)](https://coveralls.io/github/chrispomeroyhale/csv-dialect-swift?branch=main)
 
 A multi-dialect CSV parser written in Swift for importing and exporting the delectable flavors of comma separated values documents. This library implements [Frictionless Data's CSV Dialect](https://frictionlessdata.io/specs/csv-dialect/) spec which acknowledges that the CSV RFC 4180 is retroactive and that in practice numerous flavors of documents and exporters exist. The library also supports streaming of data incrementally for a low peak memory footprint.
