@@ -25,7 +25,7 @@ public class ImportParser {
     }
 
     /**
-        - badEncoding: Indicates input could not be decoded.
+        - badEncoding: Indicates input could not be decoded from the specified encoding.
         - uncaughtCharacter: An unexpected character at a 1-indexed row number.
         - uneven: Encountered a row whose number of values is mismatched relative to other rows. All rows are expected to contain the same number of values.
     */
@@ -50,8 +50,8 @@ public class ImportParser {
         - Returns: Parsed rows. An incomplete row is not returned prematurely until the data is provided or a flush command is issued.
         - Note: It is best practice to call the flush method after having parsed the last of the input data.
     */
-    public func `import`(data: Data) throws -> [Row] {
-        guard let string = String(data: data, encoding: String.Encoding.utf8) else {
+    public func `import`(data: Data, encoding: String.Encoding = .utf8) throws -> [Row] {
+        guard let string = String(data: data, encoding: encoding) else {
             throw ImportError.badEncoding
         }
 

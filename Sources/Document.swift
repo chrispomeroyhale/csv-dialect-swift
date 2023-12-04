@@ -50,9 +50,9 @@ public class Document: InputHandlerDelegate {
         - Parameter data: Data which comprises of the entire document as a UTF-8 string.
         - Parameter dialect: Dialect from which to parse against.
     */
-    public convenience init(data: Data, dialect: Dialect = Dialect()) throws {
+    public convenience init(data: Data, encoding: String.Encoding = .utf8, dialect: Dialect = Dialect()) throws {
         let parser = ImportParser(dialect: dialect)
-        var allRows = try parser.import(data: data)
+        var allRows = try parser.import(data: data, encoding: encoding)
         if let row = try parser.flushRow() {
             allRows.append(row)
         }
@@ -64,9 +64,9 @@ public class Document: InputHandlerDelegate {
 
         - Note: Although this streams input data from the `FileHandle` the resulting document is still the full physical representation of the data.
     */
-    public convenience init(fileHandle: FileHandle, dialect: Dialect = Dialect()) throws {
+    public convenience init(fileHandle: FileHandle, encoding: String.Encoding = .utf8, dialect: Dialect = Dialect()) throws {
         self.init(dialect: dialect)
-        let inputHandler = InputHandler(fileHandle: fileHandle, dialect: dialect)
+        let inputHandler = InputHandler(fileHandle: fileHandle, encoding: encoding, dialect: dialect)
         inputHandler.delegate = self
         try inputHandler.readToEndOfFile()
     }

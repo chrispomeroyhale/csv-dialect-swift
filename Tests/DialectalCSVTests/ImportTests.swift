@@ -4,6 +4,7 @@ import XCTest
 class ImportTests: XCTestCase {
 
     static var allTests = [
+        ("testBadEncoding", testBadEncoding),
         ("testEscapeCharacter", testEscapeCharacter),
         ("testEscapeDoubleQuote", testEscapeDoubleQuote),
         ("testHeadersOnly", testHeadersOnly),
@@ -21,9 +22,23 @@ class ImportTests: XCTestCase {
         ("testTrailingComma", testTrailingComma),
         ("testUnescapedQuotes", testUnescapedQuotes),
         ("testUnquotedHeaders", testUnquotedHeaders),
-        ("testBadEncoding", testBadEncoding),
-        ("testVariableWidthEncodedStreamSplit", testVariableWidthEncodedStreamSplit)
+        ("testVariableWidthEncodedStreamSplit", testVariableWidthEncodedStreamSplit),
+        ("testWestern1252Encoding", testWestern1252Encoding)
     ]
+
+    func testBadEncoding() throws {
+        let fileURL = Utility.fixtureURL(named: "western1252Encoded.csv")
+        let fileHandle = try FileHandle(forReadingFrom: fileURL)
+        do {
+            _ = try Document(fileHandle: fileHandle)
+        } catch ImportParser.ImportError.badEncoding {
+            return
+        } catch {
+            XCTFail()
+            return
+        }
+        XCTFail()
+    }
 
     func testEscapeCharacter() {
         let data = Utility.fixture(named: "escapeCharacter.csv")
@@ -290,20 +305,6 @@ class ImportTests: XCTestCase {
         XCTAssertEqual(document.header![1], HeaderFields.author.rawValue + " name")
     }
 
-    func testBadEncoding() throws {
-        let fileURL = Utility.fixtureURL(named: "western1252Encoded.csv")
-        let fileHandle = try FileHandle(forReadingFrom: fileURL)
-        do {
-            _ = try Document(fileHandle: fileHandle)
-        } catch ImportParser.ImportError.badEncoding {
-            return
-        } catch {
-            XCTFail()
-            return
-        }
-        XCTFail()
-    }
-
     func testVariableWidthEncodedStreamSplit() throws {
         let inputURL = Utility.fixtureURL(named: "variableWidthEncodedStreamSplit.csv")
         var dialect = Dialect()
@@ -311,31 +312,31 @@ class ImportTests: XCTestCase {
 
         let inputFileHandle = try FileHandle(forReadingFrom: inputURL)
         var inputHandler = InputHandler(fileHandle: inputFileHandle, dialect: dialect)
-        var handler = SpyInputHandlerDelegate()
-        inputHandler.delegate = handler
+        var outputSpy = SpyInputHandlerDelegate()
+        inputHandler.delegate = outputSpy
 
         for numberOfBytes in 1...4 {
             try inputHandler.readToEndOfFile(length: numberOfBytes)
-            XCTAssertEqual(handler.records.count, 2)
+            XCTAssertEqual(outputSpy.records.count, 2)
 
-            let first = try XCTUnwrap(handler.records[safe: 0])
+            let first = try XCTUnwrap(outputSpy.records[safe: 0])
             XCTAssertEqual(first.count, 4)
-            XCTAssertEqual(first[0], "éab")
-            XCTAssertEqual(first[1], "abé")
-            XCTAssertEqual(first[2], "aéb")
-            XCTAssertEqual(first[3], "abcé")
+            XCTAssertEqual(first[safe: 0], "éab")
+            XCTAssertEqual(first[safe: 1], "abé")
+            XCTAssertEqual(first[safe: 2], "aéb")
+            XCTAssertEqual(first[safe: 3], "abcé")
 
-            let second = try XCTUnwrap(handler.records[safe: 1])
+            let second = try XCTUnwrap(outputSpy.records[safe: 1])
             XCTAssertEqual(second.count, 4)
-            XCTAssertEqual(second[0], "123")
-            XCTAssertEqual(second[1], "456")
-            XCTAssertEqual(second[2], "789")
-            XCTAssertEqual(second[3], "321")
+            XCTAssertEqual(second[safe: 0], "123")
+            XCTAssertEqual(second[safe: 1], "456")
+            XCTAssertEqual(second[safe: 2], "789")
+            XCTAssertEqual(second[safe: 3], "321")
         }
 
         inputHandler = InputHandler(fileHandle: inputFileHandle, dialect: dialect, maxRetries: 0)
-        handler = SpyInputHandlerDelegate()
-        inputHandler.delegate = handler
+        outputSpy = SpyInputHandlerDelegate()
+        inputHandler.delegate = outputSpy
 
         for numberOfBytes in 1...4 {
             do {
@@ -347,6 +348,20 @@ class ImportTests: XCTestCase {
                 return
             }
         }
+    }
+
+    func testWestern1252Encoding() throws {
+        let inputURL = Utility.fixtureURL(named: "western1252Encoded.csv")
+        let inputFileHandle = try FileHandle(forReadingFrom: inputURL)
+        let inputHandler = InputHandler(fileHandle: inputFileHandle, encoding: .windowsCP1252)
+        let outputSpy = SpyInputHandlerDelegate()
+        inputHandler.delegate = outputSpy
+
+        try inputHandler.readToEndOfFile()
+        XCTAssertEqual(outputSpy.records.count, 1)
+        let first = try XCTUnwrap(outputSpy.records.first)
+        XCTAssertEqual(first[safe: 0], "Always bear in mind that your own resolütion to succeed is more important than any other.")
+        XCTAssertEqual(first[safe: 1], "Abraham Lincoln")
     }
 
 }

@@ -57,6 +57,7 @@ public class InputHandler {
     private let maxRetries: Int
     private var retries: Int = 0
     private let fileHandle: FileHandle
+    private let encoding: String.Encoding
     private var parser: ImportParser
 
     /**
@@ -64,23 +65,24 @@ public class InputHandler {
         - Parameter dialect: Dialect from which to parse against.
         - Parameter maxRetries: Maximum number of allowed consecutive retries
     */
-    public init(fileHandle: FileHandle, dialect: Dialect = Dialect(), maxRetries: Int = InputHandler.defaultMaxRetries) {
+    public init(fileHandle: FileHandle, encoding: String.Encoding = .utf8, dialect: Dialect = Dialect(), maxRetries: Int = InputHandler.defaultMaxRetries) {
         self.fileHandle = fileHandle
+        self.encoding = encoding
         self.dialect = dialect
         self.maxRetries = maxRetries
         self.parser = ImportParser(dialect: dialect)
     }
 
-    public convenience init(from url: URL, dialect: Dialect = Dialect(), maxRetries: Int = InputHandler.defaultMaxRetries) throws {
+    public convenience init(from url: URL, encoding: String.Encoding = .utf8, dialect: Dialect = Dialect(), maxRetries: Int = InputHandler.defaultMaxRetries) throws {
         let fileHandle = try FileHandle(forReadingFrom: url)
-        self.init(fileHandle: fileHandle, dialect: dialect, maxRetries: maxRetries)
+        self.init(fileHandle: fileHandle, encoding: encoding, dialect: dialect, maxRetries: maxRetries)
     }
 
-    public convenience init?(atPath path: String, dialect: Dialect = Dialect(), maxRetries: Int = InputHandler.defaultMaxRetries) {
+    public convenience init?(atPath path: String, encoding: String.Encoding = .utf8, dialect: Dialect = Dialect(), maxRetries: Int = InputHandler.defaultMaxRetries) {
         guard let fileHandle = FileHandle(forReadingAtPath: path) else {
             return nil
         }
-        self.init(fileHandle: fileHandle, dialect: dialect, maxRetries: maxRetries)
+        self.init(fileHandle: fileHandle, encoding: encoding, dialect: dialect, maxRetries: maxRetries)
     }
 
     deinit {
@@ -103,7 +105,7 @@ public class InputHandler {
 
         var rows = [Row]()
         do {
-            rows = try self.parser.import(data: data)
+            rows = try self.parser.import(data: data, encoding: encoding)
         } catch ImportParser.ImportError.badEncoding {
             self.retries += 1
             // We may have received incomplete data that broke UTF-8 decoding due to variable byte widths
