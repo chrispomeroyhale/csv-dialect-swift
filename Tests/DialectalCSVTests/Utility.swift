@@ -46,3 +46,30 @@ class Utility {
     }
 
 }
+
+extension Array {
+
+    subscript(safe index: Index) -> Element? {
+        guard index < endIndex, index >= startIndex else { return nil }
+        return self[index]
+    }
+
+}
+
+import DialectalCSV
+
+class SpyInputHandlerDelegate: InputHandlerDelegate {
+
+    private(set) var records = [Record]()
+
+    public func open(header: Header? = nil) throws {}
+
+    public func append(records: [Record]) throws {
+        self.records.append(contentsOf: records)
+    }
+
+    public func close() throws {}
+
+    public func reset() {}
+
+}

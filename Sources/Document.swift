@@ -3,7 +3,7 @@ import Foundation
 /**
     Convenience model for working with CSV in-memory.
 
-    - Note: Take advantage of data streaming capabilities when possible.
+    - Note: Take advantage of data streaming capabilities when possible instead of using this convenience class.
 */
 public class Document: InputHandlerDelegate {
 
@@ -61,6 +61,8 @@ public class Document: InputHandlerDelegate {
 
     /**
         Initialize a document from a CSV-formatted file.
+
+        - Note: Although this streams input data from the `FileHandle` the resulting document is still the full physical representation of the data.
     */
     public convenience init(fileHandle: FileHandle, dialect: Dialect = Dialect()) throws {
         self.init(dialect: dialect)

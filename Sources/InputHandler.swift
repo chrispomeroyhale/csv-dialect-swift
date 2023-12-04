@@ -39,6 +39,7 @@ public protocol InputHandlerDelegate: class {
 public class InputHandler {
 
     public static let defaultByteLength = 128
+    public static let defaultMaxRetries = 3
 
     /**
         Delegate responsible for handling events from the input stream.
@@ -53,29 +54,33 @@ public class InputHandler {
     */
     private(set) public var isOpen = false
     private var data = Data()
+    private let maxRetries: Int
+    private var retries: Int = 0
     private let fileHandle: FileHandle
     private var parser: ImportParser
 
     /**
         - Parameter fileHandle: FileHandle for reading. InputHandler should be solely responsible for controlling seeking behavior during its lifetime. The FileHandle's seek position should be at the beginning.
         - Parameter dialect: Dialect from which to parse against.
+        - Parameter maxRetries: Maximum number of allowed consecutive retries
     */
-    public init(fileHandle: FileHandle, dialect: Dialect = Dialect()) {
+    public init(fileHandle: FileHandle, dialect: Dialect = Dialect(), maxRetries: Int = InputHandler.defaultMaxRetries) {
         self.fileHandle = fileHandle
         self.dialect = dialect
+        self.maxRetries = maxRetries
         self.parser = ImportParser(dialect: dialect)
     }
 
-    public convenience init(from url: URL, dialect: Dialect = Dialect()) throws {
+    public convenience init(from url: URL, dialect: Dialect = Dialect(), maxRetries: Int = InputHandler.defaultMaxRetries) throws {
         let fileHandle = try FileHandle(forReadingFrom: url)
-        self.init(fileHandle: fileHandle, dialect: dialect)
+        self.init(fileHandle: fileHandle, dialect: dialect, maxRetries: maxRetries)
     }
 
-    public convenience init?(atPath path: String, dialect: Dialect = Dialect()) {
+    public convenience init?(atPath path: String, dialect: Dialect = Dialect(), maxRetries: Int = InputHandler.defaultMaxRetries) {
         guard let fileHandle = FileHandle(forReadingAtPath: path) else {
             return nil
         }
-        self.init(fileHandle: fileHandle, dialect: dialect)
+        self.init(fileHandle: fileHandle, dialect: dialect, maxRetries: maxRetries)
     }
 
     deinit {
@@ -85,8 +90,8 @@ public class InputHandler {
     /**
         Reads and parses a chunk of data from the FileHandle and directs output to its delegate.
 
-        - Parameter length: Maximum byte length of data to read.
-        - Return: Whether data was read. False indicates end of file.
+        - Parameter length: Maximum number of bytes of data to read.
+        - Returns: Whether data was read and to continue reading. Data may have been buffered. False indicates end of file.
         - Throws: May throw anything the `InputHandlerDelegate` or `ImportParser` throws. If thrown, state should be assumed to be invalid and should be reset before attempting to read again.
     */
     public func read(length: Int = InputHandler.defaultByteLength) throws -> Bool {
@@ -100,7 +105,13 @@ public class InputHandler {
         do {
             rows = try self.parser.import(data: data)
         } catch ImportParser.ImportError.badEncoding {
-            return true // We may have broken utf8 in receiving incomplete data
+            self.retries += 1
+            // We may have received incomplete data that broke UTF-8 decoding due to variable byte widths
+            // We give the reader an opportunity to read more before throwing that error
+            guard self.retries <= self.maxRetries else {
+                throw ImportParser.ImportError.badEncoding
+            }
+            return true
         }
         var dropHeader = false
 
@@ -118,6 +129,7 @@ public class InputHandler {
         try self.delegate?.append(records: dropHeader ? Array(rows.dropFirst()) : rows)
 
         self.data = Data()
+        self.retries = 0
 
         return true
     }
@@ -125,7 +137,7 @@ public class InputHandler {
     /**
         Convenience for reading the FileHandle and handling parsing through to the end of file.
 
-        - Parameter length: Maximum byte length of data to read at each iteration.
+        - Parameter length: Maximum number of bytes of data to read at each iteration.
     */
     public func readToEndOfFile(length: Int = InputHandler.defaultByteLength) throws {
         while try self.read(length: length) {}
@@ -151,6 +163,7 @@ public class InputHandler {
         self.parser = ImportParser(dialect: dialect)
         self.isOpen = false
         self.data = Data()
+        self.retries = 0
         self.delegate?.reset()
         return true
     }
